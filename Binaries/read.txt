@@ -1,0 +1,205 @@
+1.) The code for using Gemini's API is her listed below:
+
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+import speech_recognition as sr # This will help to recognize the voice of the user as an input. It uses the PyAudio module to recognize the user input
+import pyttsx3
+
+def genZ():
+    load_dotenv()
+
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+    # Create the model
+    generation_config = {
+    "temperature": 1,
+    "top_p": 0.95,
+    "top_k": 40,
+    "max_output_tokens": 500,
+    "response_mime_type": "text/plain",
+    }
+
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        generation_config=generation_config,
+    )
+
+    history = []
+
+    while True:
+        r = sr.Recognizer()
+        with sr.Microphone() as source:
+            print("Listening...")
+            audio = r.listen(source)
+        
+        try:
+            user_input = r.recognize_google(audio)
+            print(f"You: {user_input}")
+            chat_session = model.start_chat(
+            history = history
+            )
+
+            response = chat_session.send_message(user_input)
+
+            model_response = response.text
+            print(f'luCpher: {model_response}')
+            print()
+
+            history.append({"role": "user", "parts": [user_input]})
+            history.append({"role": "model", "parts": [model_response]})
+            engine = pyttsx3.init()
+            engine.say(model_response)
+            engine.runAndWait()
+
+        except sr.UnknownValueError:
+            print("Could not understand audio")
+        except sr.RequestError as e:
+            print(f"Could not request results from Google Speech Recognition services; {e}")
+
+
+2.) The main code for the other functionalities and main functionality as well are listed below:
+
+import sqlite3
+from Binaries.gen import genZ
+from flask import Flask
+import speech_recognition as sr
+import pyttsx3
+import datetime
+import wikipedia
+import webbrowser
+import os
+import pywhatkit as auto
+import re
+
+AI_NAME = "lucifer"
+
+con = sqlite3.connect("luCpher.db")
+cursor = con.cursor()
+
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voices', voices[0].id)
+engine.setProperty('rate', 174)
+
+def speech(audio):
+    engine.say(audio)
+    engine.runAndWait()
+
+def greet():
+    hour = int(datetime.datetime.now().hour)
+
+    if hour >= 4 and hour < 12:
+        speech("Good morning sir, Lucifer this side.")
+    elif hour >=12 and hour < 16:
+        speech("Good afternoon sir, Lucifer this side.")
+    else:
+        speech("Good evening sir, Lucifer this side.")
+    speech("May I help you?")
+
+def inputCommand():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        r.pause_threshold = 2
+        audio = r.listen(source)
+        
+        try:
+            print("Initializing...")
+            ask = r.recognize_google(audio, language="en-in")
+            print(f"You said: {ask}\n")
+
+        except Exception as e: 
+            print("Anything else, Sir?")
+            speech("Anything else, Sir?")
+            return "None"
+        return ask
+
+def openComm(ask):
+    ask = ask.replace("hey "+AI_NAME, "")
+    ask = ask.replace("open", "")
+    ask.lower()
+
+    app_name = ask.strip()
+
+    if app_name != "":
+
+        try:
+            cursor.execute(
+                'SELECT path FROM sys_command WHERE name IN (?)', (app_name,))
+            results = cursor.fetchall()
+
+            if len(results) != 0:
+                print("Opening "+ask)
+                speech("Opening "+ask)
+                os.startfile(results[0][0])
+
+            elif len(results) == 0: 
+                cursor.execute(
+                    'SELECT url FROM web_command WHERE name IN (?)', (app_name,))
+                results = cursor.fetchall()
+                
+                if len(results) != 0:
+                    print("Opening "+ask)
+                    speech("Opening "+ask)
+                    webbrowser.open(results[0][0])
+
+                else:
+                    print("Opening "+ask)
+                    speech("Opening "+ask)
+                    try:
+                        os.system('start '+ask)
+                    except:
+                        speech("not found")
+        except:
+            speech("some thing went wrong")
+
+
+def Youtube(ask):
+    search = ex_yt(ask)
+    print("Playing "+search+" on Youtube")
+    speech("Playing"+search+"on Youtube")
+    auto.playonyt(search)
+
+def ex_yt(command):
+    pattern = r'play\s+(.*?)\s+on\s+youtube' 
+    check = re.search(pattern, command, re.IGNORECASE) 
+    return check.group(1) if check else None 
+
+
+if __name__ == "__main__": 
+    greet()
+    while True:
+        ask = inputCommand().lower()
+
+        if 'open' in ask: 
+            openComm(ask)
+
+        elif 'on youtube' in ask: 
+            Youtube(ask)
+
+        elif 'the time' in ask:
+            string_time = datetime.datetime.now().strftime("%H:%M:%S")
+            print(string_time)
+            speech(string_time)
+
+        elif 'who are you' in ask or "what's your name" in ask or "what is your name" in ask or "tell me about yourself" in ask:
+            print("I am luCpher, your personal virtual assistant and am here to make your tasks easy.")
+            speech("i am lucifer, your personal virtual assistant and am here to make your tasks easy. Anything I can help you with?")
+
+        elif 'good job' in ask or 'good job lucifer' in ask or 'lucifer good job' in ask or 'good job lucy' in ask:
+            print('Thank You Sir. Any more orders for me to get more such compliments?')
+            speech('Thank You Sir! Any more orders for me to get more such compliments?') 
+
+        elif 'nothing' in ask or 'you can go' in ask or 'you may leave' in ask:
+            print('As you wish, Sir. Feel free to call me again. GoodBye!')
+            speech('As you wish,Sir. Feel free to call me again. GoodBye!  .')
+            break
+
+        elif 'search' in ask:
+            auto.search(ask.replace('search', ''))
+
+        else:
+            genZ()
+
+merging these two of them will give us the code which is in assist.py file.
