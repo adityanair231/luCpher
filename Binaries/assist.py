@@ -11,68 +11,39 @@ wnfndfkjofoiuljdfsdpfikpshgo0wr-290eknf m  131p324-340-0t03249=04
 fksndkf=-1340=230dlmsdf=-2340-=2-323443mml4ml234kh=-23042323////2342340-39=-
 
 '''
-from flask import Flask
-import os # We can gain access to the system using this module
-import google.generativeai as genai # for using gemini's api
-from dotenv import load_dotenv # for creating a .env file and store there our API key
-import speech_recognition as sr  # For recognizing voice input
-import pyttsx3  # For text-to-speech output
-import sqlite3  # For accessing the database
-import datetime  # For getting the current time
-import webbrowser  # For opening URLs
-import pywhatkit as auto  # For automating WhatsApp and playing YouTube videos
-import re  # For regular expressions used in YouTube search
+import tkinter as tk
+from tkinter import PhotoImage
+import threading
+import os
+import speech_recognition as sr
+import pyttsx3
+import sqlite3
+import datetime
+import webbrowser
+import re
+import pywhatkit as auto
+from dotenv import load_dotenv
+import google.generativeai as genai
+from PIL import Image, ImageTk, ImageDraw, ImageFilter
 
-AI_NAME = "lucifer"  # NAME OF OUR ASSISTANT :-D 
 
-# Initialize database connection for system commands and web commands
+# === CONFIG ===
+AI_NAME = "lucifer"
+process_complete = False
+
+# === INIT DB & SPEECH ENGINE ===
 con = sqlite3.connect("luCpher.db")
 cursor = con.cursor()
-'''
-Basically the following code will be used to declare the type of voice and 
-from where the the voices will be considered. For example, the sapi5 module in the following code is used 
-for defining the type of voice used in the code. Sapi5 is the microsoft's speech API which will be using in the project for the 
-speech output...
 
-1312-039-120=-34-=234-23nk32n4kn234-=340=-//??
-??234093=-2=34023=0234=3ml4m23l4m3-=4 =324=-324=-o4-=230c
-23=49023o4c-]23-40=-3 4=-23=-4=-234  jojjfgjgjdfg9gi-34-02-=3//....
-
-'''
-
-# Setting up the engine through speech API by Microsoft (sapi5)
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
-engine.setProperty('voices', voices[0].id)  # Set to male voice (0th index)
-engine.setProperty('rate', 174)  # Set speech speed
+engine.setProperty('voice', voices[0].id)
+engine.setProperty('rate', 174)
 
-# Speech function for the assistant's voice output
 def speech(audio):
     engine.say(audio)
     engine.runAndWait()
 
-#This following function will be used to greet the user as the program or application starts. It will wish according to the time of the day
-def greet():
-    hour = int(datetime.datetime.now().hour)
-    if hour >= 4 and hour < 12:
-        speech("Good morning, Lucifer this side.")
-    elif hour >= 12 and hour < 16:
-        speech("Good afternoon, Lucifer this side.")
-    else:
-        speech("Good evening, Lucifer this side.")
-    speech("May I help you?")
-
-'''
-This following function is the main source of our command for the voice assistant project. This is the base of our operation 
-for the voice assistant. From here we can decide the time duration of our speech, the listening of our audio from the given source
-and initializng what the user said after recognizing the audio as an input.
-
-eyr9894234=-23=4-02=3-04=-2304-=m.vm.cmx.v4-23-=40///
-??@@@0230-32390239023--032%%*&^*&*(())00900--0-=09-(()(&^%R))
-&*)*)&(^&(&)&)(----()*@(*)98029800*(@^ksdjkhdkfhsdi_(-9-01293-923-4)))
-
-'''
-# Recognize user command through speech
 def inputCommand():
     r = sr.Recognizer()
     with sr.Microphone() as source:
@@ -80,86 +51,50 @@ def inputCommand():
         r.pause_threshold = 2
         audio = r.listen(source)
 
-    try: #try and catch method is applied for exception handling for the given function
-        print("Initializing...")
+    try:
+        print("Recognizing...")
         ask = r.recognize_google(audio, language="en-in")
-        print(f"You said: {ask}\n")
-    except Exception as e:
-        print("Anything else?")
+        print(f"You said: {ask}")
+    except Exception:
         speech("Anything else?")
         return "None"
     return ask
 
-'''
-The following commands in the function are the ones by which we can open our exisisting application inside the computer operating system or 
-web applications by accessing their URL's and Paths. The given function is used to open the application present in the system like Notepad, 
-Spotify, command prompt, powershell, google, youtube, instagram, etc., when the user's ask variable satisfies the condition.
-
-2342342=34-=04=23-4=234234-23=4-23=-4=32==2-x=340=230c==fc32=d0=x=
-sdf9sd-f-=s0f-=s0df04-20344=0sdd0v=0v=sv=s0=0fs=0f=we0f=ffgh0=ty0u=
-%%^*(@*&*(@_+)+@_+)+)+_)+@)#*)@*#)@-==0=0=@#)_#_kxkvcdsk@_+)+_0=-0+_
-
-'''
-# Open system apps or URLs from the database
 def openComm(ask):
     ask = ask.replace("hey " + AI_NAME, "").replace("open", "").lower().strip()
-    if ask != "":
+    if ask:
         try:
             cursor.execute('SELECT path FROM sys_command WHERE name IN (?)', (ask,))
             results = cursor.fetchall()
-            if len(results) != 0:
-                print("Opening " + ask)
+            if results:
                 speech("Opening " + ask)
                 os.startfile(results[0][0])
             else:
                 cursor.execute('SELECT url FROM web_command WHERE name IN (?)', (ask,))
                 results = cursor.fetchall()
-                if len(results) != 0:
-                    print("Opening " + ask)
+                if results:
                     speech("Opening " + ask)
                     webbrowser.open(results[0][0])
                 else:
-                    print("Opening " + ask)
                     speech("Opening " + ask)
                     os.system('start ' + ask)
         except:
             speech("Something went wrong")
 
-'''
-The following two functions are used here to automate youtube videos and play them according to the instructions given by the user. The first
-function is used here to call the second function which helps in responding to the user's input an gives output accordingly. The second function
-searches the video on youtube which the user has demanded accordingly.
-
-1hn341hn34ojkhn13324ok14234-1-12312-312-31-231-2o3-1o3o49o-=140=-2304
-1=934-=019o4-=0o04=-3904=9o2-23mrp23mr-23o -=r59o=24-rof-=-=w9f=s9o=3=
-492-0kclm$^)()_)_+(_+)*( (=90=-9=-9=80 7)_)(_*)@&(&@)_#*I()_@U)EWJM@KOL
-
-'''
-# Automating YouTube search
 def Youtube(ask):
     search = ex_yt(ask)
-    print("Playing " + search + " on YouTube")
-    speech("Playing " + search + " on YouTube")
-    auto.playonyt(search)
+    if search:
+        speech("Playing " + search + " on YouTube")
+        auto.playonyt(search)
 
 def ex_yt(command):
     pattern = r'play\s+(.*?)\s+on\s+youtube'
     check = re.search(pattern, command, re.IGNORECASE)
     return check.group(1) if check else None
 
-'''
-The following function is used to import and process the functions of the gemini API, google's own personal A.I. and it automates the input search
-given by the user. This Python code defines a function genZ that interacts with the Gemini AI model to generate text responses to user input. 
-It loads environment variables, configures the Gemini AI API, starts a chat session, sends user input, processes the model's response, and then 
-both prints and speaks the response. Error handling is implemented to gracefully handle potential exceptions.
-'''
-
-# Call generative AI for responses
-def genZ(user_input):# defining a function with an argument...
-    load_dotenv()# This line loads environment variables from a .env file, i.e., API key.
-
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY")) # configuration of API with its key...
-    # It creates a dictionary...
+def genZ(user_input):
+    load_dotenv()
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     generation_config = {
         "temperature": 1,
         "top_p": 0.95,
@@ -168,64 +103,153 @@ def genZ(user_input):# defining a function with an argument...
         "response_mime_type": "text/plain",
     }
 
- # specifying the generative A.I. model
     model = genai.GenerativeModel(
         model_name="gemini-1.5-flash",
         generation_config=generation_config,
     )
 
-    history = [] # To store the chat in this empty list.
+    history = []
 
     try:
-        chat_session = model.start_chat(history=history) # This will start a new chat session with the model, providing the existing chat history.
-        response = chat_session.send_message(user_input)# Sends user_input and receive response
-        model_response = response.text # This extracts text content from model_response
-        print(f'luCpher: {model_response}\n')# Printing model_response to the console...
-
-        history.append({"role": "user", "parts": [user_input]})# To append user input to the chat history
-        history.append({"role": "model", "parts": [model_response]})# To append the model response to the chat history
-        engine.say(model_response)
-        engine.runAndWait()
+        chat_session = model.start_chat(history=history)
+        response = chat_session.send_message(user_input)
+        model_response = response.text
+        print(f'luCpher: {model_response}')
+        speech(model_response.replace("*", ""))
     except Exception as e:
-        print(f"Error calling Gemini AI: {e}")# prints an error message
-        speech("Sorry, something went wrong with the API module.")# speaks the apology for error.
+        print("Gemini error:", e)
+        speech("Sorry, something went wrong with the API module.")
 
-# Main control function
-if __name__ == "__main__":  
-    greet()  # Greet the user based on time of the day
+def run_voice_assistant():
+    """This is the original greet() logic but in a thread-safe function."""
+    global process_complete
+    hour = int(datetime.datetime.now().hour)
+    if 4 <= hour < 12:
+        speech("Good morning, sir, Lucifer this side.")
+    elif 12 <= hour < 16:
+        speech("Good afternoon< sir, Lucifer this side.")
+    else:
+        speech("Good evening, sir, Lucifer this side.")
+    speech("May I help you?")
+
     while True:
         ask = inputCommand().lower()
 
-        # Predefined commands
-        if 'open' in ask:  # For opening system or web applications
+        if 'open' in ask:
             openComm(ask)
-
-        elif 'on youtube' in ask:  # To play youtube videos
+        elif 'on youtube' in ask:
             Youtube(ask)
-
-        # For asking the time
         elif 'the time' in ask:
             string_time = datetime.datetime.now().strftime("%H:%M:%S")
-            print(string_time)
             speech(string_time)
-
-        # Some common hot word responses
-        elif 'who are you' in ask or "what's your name" in ask or "what is your name" in ask or "tell me about yourself" in ask:
-            print("I am luCpher, your personal virtual assistant and am here to make your tasks easy.")
-            speech("I am lucifer, your personal virtual assistant and am here to make your tasks easy. Anything I can help you with?")
-
-        elif 'good job' in ask or 'good job lucifer' in ask or 'lucifer good job' in ask or 'good job lucy' in ask:
-            print('Thank You. Any more orders for me to get more such compliments?')
-            speech('Thank You! Any more orders for me to get more such compliments?')
-
-        elif 'nothing' in ask or 'you can go' in ask or 'you may leave' in ask: # To ask our assistant to leave the task....
-            print('As you wish. Feel free to call me again. Goodbye!')
-            speech('As you wish. Feel free to call me again. Goodbye.')
-            break
-
         elif 'search' in ask:
-            auto.search(ask.replace('search', '')) # To search the given queries in google search engine...
-
+            auto.search(ask.replace('search', ''))
+        elif 'who are you' in ask or "what's your name" in ask:
+            speech("I am lucifer, your personal virtual assistant.")
+        elif 'good job' in ask:
+            speech("Thank you! Any more orders for me, sir?")
+        elif 'nothing' in ask or 'you may leave' in ask or 'bye' in ask:
+            speech("As you wish, sir. Feel free to call me again. Goodbye!")
+            process_complete = True
+            break
         else:
-            # If no predefined command matches, go through the gemini_api....
             genZ(ask)
+
+
+# === TKINTER UI ===
+
+root = tk.Tk()
+root.title("Lucpher | Home Page")
+root.configure(bg="black")
+root.geometry("900x600")
+
+# --- Top Bar ---
+border_frame = tk.Frame(root, bg="black")
+border_frame.pack(fill="x", pady=10)
+
+logo_img = PhotoImage(file="lucpher.jpg3.png")
+logo_img = logo_img.subsample(3, 3)
+
+logo_label = tk.Label(border_frame, image=logo_img, bg="black")
+logo_label.pack(side="left", padx=25)
+
+lucpher_label = tk.Label(border_frame, text="LuCpher", font=("Poppins", 24, "bold"),
+                         fg="#DE0909", bg="black")
+lucpher_label.pack(side="left", padx=20)
+
+guide_label = tk.Label(border_frame, text="Guide", font=("Poppins", 18, "bold"),
+                       fg="#DE0909", bg="black", cursor="hand2")
+guide_label.pack(side="right", padx=15)
+
+# --- Center Canvas ---
+canvas = tk.Canvas(root, bg="black", highlightthickness=0)
+canvas.pack(expand=True, fill="both")
+
+# Load and crop image
+original_img = Image.open("lucpher.jpg2.png")
+bbox = original_img.getbbox()
+cropped_img = original_img.crop(bbox)
+
+def create_gradient(width, height):
+    """Creates a smooth black -> dark red gradient image."""
+    gradient = Image.new("RGB", (width, height), "#000000")
+    draw = ImageDraw.Draw(gradient)
+    for i in range(height):
+        r = int(0 + (222 * (i / height)))  # Dark red towards bottom
+        draw.line((0, i, width, i), fill=(r, 0, 0))
+    return ImageTk.PhotoImage(gradient)
+
+def draw_logo(event=None):
+    canvas.delete("all")
+    canvas_w = canvas.winfo_width()
+    canvas_h = canvas.winfo_height()
+
+    # Draw gradient background
+    gradient_img = create_gradient(canvas_w, canvas_h)
+    canvas.create_image(0, 0, image=gradient_img, anchor="nw")
+    canvas.gradient = gradient_img
+
+    # Choose smallest dimension so logo remains a circle
+    size = min(canvas_w, canvas_h) - 80
+    resized_img = cropped_img.resize((size, size), Image.LANCZOS)
+
+    # Create glow effect
+    glow_size = size + 40
+    glow = Image.new("RGBA", (glow_size, glow_size), (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow)
+    glow_draw.ellipse((0, 0, glow_size, glow_size), fill=(222, 9, 9, 90))
+    glow = glow.filter(ImageFilter.GaussianBlur(30))
+    glow_tk = ImageTk.PhotoImage(glow)
+
+    # Place glow + logo
+    canvas.create_image(canvas_w//2, canvas_h//2, image=glow_tk, anchor="center")
+    canvas.glow = glow_tk
+
+    tk_img = ImageTk.PhotoImage(resized_img)
+    canvas.create_image(canvas_w//2, canvas_h//2, image=tk_img, anchor="center")
+    canvas.image = tk_img
+
+canvas.bind("<Configure>", draw_logo)
+
+# --- Bottom Microphone with Animation ---
+mike_label = tk.Label(root, text="🎙️", font=("Arial", 40), fg="#EA4444", bg="black")
+mike_label.pack(side="bottom", pady=15)
+
+def animate_mic():
+    """Makes mic glow for a moment."""
+    for i in range(3):
+        mike_label.config(fg="#FF5555")
+        root.update()
+        root.after(150)
+        mike_label.config(fg="#EA4444")
+        root.update()
+        root.after(150)
+
+def on_mic_click(event):
+    animate_mic()
+    threading.Thread(target=run_voice_assistant, daemon=True).start()
+
+mike_label.bind("<Button-1>", on_mic_click)
+
+root.mainloop()
+
